@@ -1,0 +1,105 @@
+workflows:
+  ios-release:
+    name: iOS Release (App Store / TestFlight)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: codemagic
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.kokorocompass.app
+      vars:
+        APP_STORE_APPLE_ID: 0000000000
+        BUNDLE_ID: "com.kokorocompass.app"
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Generate launcher icons
+        script: |
+          dart run flutter_launcher_icons
+      - name: Pod install
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+      - name: Set build number
+        script: |
+          cd $CM_BUILD_DIR
+          BUILD_NUMBER=$(($(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID") + 1))
+          echo "Setting build number to $BUILD_NUMBER"
+          flutter build ipa --release \
+            --build-name=1.0.0 \
+            --build-number=$BUILD_NUMBER \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - Internal Tester
+        submit_to_app_store: false
+
+  ios-debug-build:
+    name: iOS Debug Build (動作確認用)
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Generate launcher icons
+        script: |
+          dart run flutter_launcher_icons
+      - name: Pod install
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+      - name: Build iOS debug (no signing)
+        script: |
+          flutter build ios --debug --no-codesign
+    artifacts:
+      - build/ios/iphoneos/*.app
+
+  android-release:
+    name: Android Release (Google Play 用)
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      android_signing:
+        - kokorocompass_keystore
+      vars:
+        PACKAGE_NAME: "com.kokorocompass.app"
+      flutter: stable
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Generate launcher icons
+        script: |
+          dart run flutter_launcher_icons
+      - name: Build Android App Bundle
+        script: |
+          flutter build appbundle --release \
+            --build-name=1.0.0 \
+            --build-number=1
+    artifacts:
+      - build/**/outputs/**/*.aab
+      - build/**/outputs/**/mapping.txt
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true

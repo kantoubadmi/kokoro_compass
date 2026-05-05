@@ -1,0 +1,38 @@
+name: kokoro_compass
+description: >
+  こころコンパス - 心の健康を支えるウェルネスアプリ。
+  感謝日記、瞑想ガイド、呼吸法、睡眠トラッキング、気分記録など、
+  毎日の心のケアをサポートする機能を備えています。
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.1.1
+  shared_preferences: ^2.2.2
+  intl: ^0.18.1
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.14.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon/
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/icon/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#7B9E89"
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
