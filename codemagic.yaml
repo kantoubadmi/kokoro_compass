@@ -13,37 +13,36 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
-      - name: Set up keychain
+      - name: Set up keychain and required directories
         script: |
           keychain initialize
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          mkdir -p ~/Library/codemagic-cli-tools/certificates
       - name: Generate Apple Distribution private key
         script: |
-          if [ ! -f /tmp/apple_distribution.key ]; then
-            ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/apple_distribution.key -q -N ""
-          fi
-      - name: Create distribution certificate (if not exists)
+          ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/apple_distribution.key -q -N ""
+      - name: List Apple Developer state (before fetch)
         script: |
-          app-store-connect certificates create \
-            --type IOS_DISTRIBUTION \
-            --certificate-key=@file:/tmp/apple_distribution.key \
-            --save 2>&1 || echo "Certificate already exists or creation skipped"
-      - name: Create App Store provisioning profile (if not exists)
-        script: |
-          app-store-connect profiles create \
-            --bundle-id "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --save 2>&1 || echo "Profile already exists or creation skipped"
-      - name: Fetch all signing files to standard locations
+          echo "=== Existing certificates on Apple side ==="
+          app-store-connect certificates list --type IOS_DISTRIBUTION || true
+          echo ""
+          echo "=== Existing profiles on Apple side ==="
+          app-store-connect profiles list --bundle-id "$BUNDLE_ID" --type IOS_APP_STORE || true
+      - name: Fetch or create signing files (single call for cert + profile)
         script: |
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
-            --certificate-key=@file:/tmp/apple_distribution.key
-      - name: Verify signing files were saved
+            --certificate-key=@file:/tmp/apple_distribution.key \
+            --profiles-dir "$HOME/Library/MobileDevice/Provisioning Profiles" \
+            --certificates-dir "$HOME/Library/codemagic-cli-tools/certificates" \
+            --create
+      - name: Verify signing files were saved to disk
         script: |
-          echo "=== Provisioning Profiles ==="
-          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "(empty)"
-          echo "=== Certificates ==="
-          ls -la ~/Library/codemagic-cli-tools/certificates/ 2>/dev/null || echo "(empty)"
+          echo "=== Provisioning Profiles directory ==="
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null
+          echo ""
+          echo "=== Certificates directory ==="
+          ls -la ~/Library/codemagic-cli-tools/certificates/ 2>/dev/null
       - name: Add certificates to keychain
         script: |
           keychain add-certificates
