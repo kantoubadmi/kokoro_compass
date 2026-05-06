@@ -8,10 +8,10 @@ workflows:
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.kokorocompass.app
+        bundle_identifier: jp.galiverman.kokorocompass
       vars:
         APP_STORE_APPLE_ID: 0000000000
-        BUNDLE_ID: "com.kokorocompass.app"
+        BUNDLE_ID: "jp.galiverman.kokorocompass"
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -81,7 +81,7 @@ workflows:
       android_signing:
         - kokorocompass_keystore
       vars:
-        PACKAGE_NAME: "com.kokorocompass.app"
+        PACKAGE_NAME: "jp.galiverman.kokorocompass"
       flutter: stable
     scripts:
       - name: Get Flutter packages

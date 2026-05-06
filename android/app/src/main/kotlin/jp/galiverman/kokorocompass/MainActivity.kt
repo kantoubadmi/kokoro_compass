@@ -1,4 +1,4 @@
-package com.kokorocompass.app
+package jp.galiverman.kokorocompass
 
 import io.flutter.embedding.android.FlutterActivity
 
