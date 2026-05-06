@@ -16,11 +16,16 @@ workflows:
       - name: Set up keychain
         script: |
           keychain initialize
+      - name: Generate Apple Distribution private key
+        script: |
+          if [ ! -f /tmp/apple_distribution.key ]; then
+            ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/apple_distribution.key -q -N ""
+          fi
       - name: Fetch or create signing files
         script: |
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
-            --certificate-key=@auto \
+            --certificate-key=@file:/tmp/apple_distribution.key \
             --create
       - name: Add certificates to keychain
         script: |
