@@ -17,7 +17,7 @@ workflows:
         script: |
           keychain initialize
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          mkdir -p ~/Library/codemagic-cli-tools/certificates
+          mkdir -p ~/Library/MobileDevice/Certificates
       - name: Generate Apple Distribution private key
         script: |
           ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/apple_distribution.key -q -N ""
@@ -34,7 +34,7 @@ workflows:
             --type IOS_APP_STORE \
             --certificate-key=@file:/tmp/apple_distribution.key \
             --profiles-dir "$HOME/Library/MobileDevice/Provisioning Profiles" \
-            --certificates-dir "$HOME/Library/codemagic-cli-tools/certificates" \
+            --certificates-dir "$HOME/Library/MobileDevice/Certificates" \
             --create
       - name: Verify signing files were saved to disk
         script: |
@@ -42,7 +42,7 @@ workflows:
           ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null
           echo ""
           echo "=== Certificates directory ==="
-          ls -la ~/Library/codemagic-cli-tools/certificates/ 2>/dev/null
+          ls -la ~/Library/MobileDevice/Certificates/ 2>/dev/null
       - name: Add certificates to keychain
         script: |
           keychain add-certificates
