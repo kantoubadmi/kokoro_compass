@@ -58,9 +58,20 @@ workflows:
       - name: Add certificates to keychain
         script: |
           keychain add-certificates
-      - name: Set up code signing
+      - name: Inspect keychain and profiles before code signing
         script: |
-          xcode-project use-profiles
+          echo "=== Available code signing identities ==="
+          security find-identity -v -p codesigning || true
+          echo ""
+          echo "=== Profile files ==="
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
+          echo ""
+          echo "=== Profile contents (first one) ==="
+          PROFILE=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision | head -1)
+          security cms -D -i "$PROFILE" | head -50 || true
+      - name: Set up code signing (verbose)
+        script: |
+          xcode-project use-profiles --verbose
       - name: Get Flutter packages
         script: |
           flutter pub get
