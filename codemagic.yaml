@@ -21,12 +21,29 @@ workflows:
           if [ ! -f /tmp/apple_distribution.key ]; then
             ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/apple_distribution.key -q -N ""
           fi
-      - name: Fetch or create signing files
+      - name: Create distribution certificate (if not exists)
+        script: |
+          app-store-connect certificates create \
+            --type IOS_DISTRIBUTION \
+            --certificate-key=@file:/tmp/apple_distribution.key \
+            --save 2>&1 || echo "Certificate already exists or creation skipped"
+      - name: Create App Store provisioning profile (if not exists)
+        script: |
+          app-store-connect profiles create \
+            --bundle-id "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --save 2>&1 || echo "Profile already exists or creation skipped"
+      - name: Fetch all signing files to standard locations
         script: |
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
-            --certificate-key=@file:/tmp/apple_distribution.key \
-            --create
+            --certificate-key=@file:/tmp/apple_distribution.key
+      - name: Verify signing files were saved
+        script: |
+          echo "=== Provisioning Profiles ==="
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "(empty)"
+          echo "=== Certificates ==="
+          ls -la ~/Library/codemagic-cli-tools/certificates/ 2>/dev/null || echo "(empty)"
       - name: Add certificates to keychain
         script: |
           keychain add-certificates
