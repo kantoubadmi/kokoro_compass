@@ -12,15 +12,27 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+    cache:
+      cache_paths:
+        - $HOME/apple_distribution.key
+        - $HOME/Library/MobileDevice/Provisioning Profiles
+        - $HOME/Library/MobileDevice/Certificates
     scripts:
       - name: Set up keychain and required directories
         script: |
           keychain initialize
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           mkdir -p ~/Library/MobileDevice/Certificates
-      - name: Generate Apple Distribution private key
+      - name: Generate or reuse Apple Distribution private key
         script: |
-          ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/apple_distribution.key -q -N ""
+          KEY_PATH="$HOME/apple_distribution.key"
+          if [ ! -f "$KEY_PATH" ]; then
+            echo "Generating new private key..."
+            ssh-keygen -t rsa -b 2048 -m PEM -f "$KEY_PATH" -q -N ""
+          else
+            echo "Reusing existing private key from cache."
+          fi
+          cp "$KEY_PATH" /tmp/apple_distribution.key
       - name: List Apple Developer state (before fetch)
         script: |
           echo "=== Existing certificates on Apple side ==="
