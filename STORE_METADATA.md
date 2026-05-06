@@ -111,9 +111,7 @@ https://galiverman.jp
 ```
 
 ### プライバシーポリシーURL（必須）
-```
-https://<github-username>.github.io/kokoro_compass-privacy/
-```
+https://kantoubadmi.github.io/kokoro_compass/
 ※GitHub Pages で公開後に確定（後ほど作成）
 
 ### カテゴリ
