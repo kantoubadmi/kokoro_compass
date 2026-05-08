@@ -84,8 +84,18 @@ workflows:
       - name: Set build number and build IPA
         script: |
           cd $CM_BUILD_DIR
-          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo "0")
+          # Get latest build number across both App Store AND TestFlight (whichever is higher)
+          APP_STORE_LATEST=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo "0")
+          TESTFLIGHT_LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo "0")
+          # Take the maximum of the two
+          if [ "$APP_STORE_LATEST" -gt "$TESTFLIGHT_LATEST" ]; then
+            LATEST_BUILD_NUMBER=$APP_STORE_LATEST
+          else
+            LATEST_BUILD_NUMBER=$TESTFLIGHT_LATEST
+          fi
           BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
+          echo "App Store latest: $APP_STORE_LATEST"
+          echo "TestFlight latest: $TESTFLIGHT_LATEST"
           echo "Setting build number to $BUILD_NUMBER"
           flutter build ipa --release \
             --build-name=1.0.0 \
