@@ -96,45 +96,101 @@ class SleepScreen extends StatelessWidget {
                           final record = provider.records[index];
                           return Card(
                             margin: const EdgeInsets.only(bottom: 8),
-                            child: ListTile(
-                              leading: Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: _getQualityColor(record.quality)
-                                      .withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(12),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onLongPress: () =>
+                                  _confirmDelete(context, record.id ?? 0),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 48,
+                                          height: 48,
+                                          decoration: BoxDecoration(
+                                            color: _getQualityColor(
+                                                    record.quality)
+                                                .withValues(alpha: 0.2),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              _getQualityEmojiSingle(
+                                                  record.quality),
+                                              style: const TextStyle(
+                                                  fontSize: 24),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                record.durationString,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                _formatDate(record.createdAt),
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withValues(alpha: 0.6),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: List.generate(5, (i) {
+                                            return Icon(
+                                              i < record.quality
+                                                  ? Icons.star
+                                                  : Icons.star_border,
+                                              size: 16,
+                                              color: i < record.quality
+                                                  ? Colors.amber
+                                                  : Colors.grey.shade300,
+                                            );
+                                          }),
+                                        ),
+                                      ],
+                                    ),
+                                    if (record.note != null &&
+                                        record.note!.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: 8,
+                                          left: 60,
+                                        ),
+                                        child: Text(
+                                          record.note!,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface
+                                                .withValues(alpha: 0.75),
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    _getQualityEmojiSingle(record.quality),
-                                    style: const TextStyle(fontSize: 24),
-                                  ),
-                                ),
-                              ),
-                              title: Text(
-                                record.durationString,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              subtitle: Text(
-                                DateFormat('M月d日 (E)', 'ja')
-                                    .format(record.createdAt),
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: List.generate(5, (i) {
-                                  return Icon(
-                                    i < record.quality
-                                        ? Icons.star
-                                        : Icons.star_border,
-                                    size: 16,
-                                    color: i < record.quality
-                                        ? Colors.amber
-                                        : Colors.grey.shade300,
-                                  );
-                                }),
                               ),
                             ),
                           );
@@ -212,6 +268,45 @@ class SleepScreen extends StatelessWidget {
         return Colors.orange;
       default:
         return Colors.red;
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    // Use Japanese locale, fall back to ISO format if locale not initialized
+    try {
+      return DateFormat('M月d日 (E)', 'ja').format(date);
+    } catch (_) {
+      return DateFormat('M/d').format(date);
+    }
+  }
+
+  Future<void> _confirmDelete(BuildContext context, int id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('記録を削除'),
+        content: const Text('この睡眠記録を削除しますか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await context.read<SleepProvider>().deleteRecord(id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('記録を削除しました')),
+        );
+      }
     }
   }
 

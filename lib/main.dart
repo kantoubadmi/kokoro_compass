@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home_screen.dart';
 import 'providers/gratitude_provider.dart';
 import 'providers/meditation_provider.dart';
@@ -12,6 +14,8 @@ import 'services/database_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Initialize Japanese locale data for DateFormat
+  await initializeDateFormatting('ja', null);
   await DatabaseService.instance.database;
   runApp(const MyApp());
 }
@@ -39,6 +43,16 @@ class MyApp extends StatelessWidget {
             theme: ThemeProvider.lightTheme,
             darkTheme: ThemeProvider.darkTheme,
             themeMode: themeProvider.themeMode,
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('ja', 'JP'),
+              Locale('en', 'US'),
+            ],
+            locale: const Locale('ja', 'JP'),
             home: const HomeScreen(),
           );
         },
